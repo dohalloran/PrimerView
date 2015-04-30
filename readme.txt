@@ -54,6 +54,3 @@ you must have muscle.exe in your PATH and you must have following BioPerl module
 WARNING: the subroutine 'clean_up' deletes the '.fa', '.fa.fasta', 
 and '.fa.fasta.aln' extension files generated from cwd, 
 
-
-Any questions:
-email: stitcher[AT]ohalloranlab.net
