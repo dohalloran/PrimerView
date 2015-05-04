@@ -7,9 +7,14 @@ To start:
 2. >tar -xzvf primerview.zip 
 3. The extracted dir will be called PRIMERVIEW  
 4. cd PRIMERVIEW
-5. insert sequence file (FASTA format) 
+5. to install:
+   perl Makefile.PL
+   make
+   make test
+   make install
+6. insert sequence file (FASTA format) 
 [folder contains a sample file called 'test_seqs.fasta']
-6. To run simply execute as follows specifying the Getopt arguments 
+7. To run simply execute as follows specifying the Getopt arguments 
    >perl primerview_driver.pl [-a filename e.g. test_seqs.fasta] 
    [-b 5' search area, integer] [-c 3' search area, integer] 
 [-d primer max, integer] [-e primer min, integer] [-f GC clamp Y or N]
