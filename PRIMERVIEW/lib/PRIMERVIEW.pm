@@ -60,7 +60,7 @@ my $spec            = $opts{k} || "N";
  
 =head1 INPUT PARAMETERS
  
-This script can have 10 parameters. The input fasta file name, the 
+This script can have 11 input parameters: The input fasta file, the 
 5' and 3' search areas, the primer max and min, the GC% max and min,
  the Tm max and min, whether to include a 3' GC clamp, and whether
  the primers are specific to the entire input file (Y) or just the 
