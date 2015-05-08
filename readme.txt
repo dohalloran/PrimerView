@@ -19,12 +19,10 @@ To start:
    [-b 5' search area, integer] [-c 3' search area, integer] 
 [-d primer max, integer] [-e primer min, integer] [-f GC clamp Y or N]
 [-g upper GC, integer] [-h lower GC, integer] [-i upper Tm, integer] 
-[-j lower Tm, integer] 
+[-j lower Tm, integer] [-k specificty across entire input file, Y or N]
 
 example settings: ">perl primerview_driver.pl -a test_seqs.fasta"
-
 default settings are as follows:
-
 my $fasta           = $opts{a};
 my $five_prime_end  = $opts{b} || "150";
 my $three_prime_end = $opts{c} || "150";
@@ -35,6 +33,7 @@ my $higher_gc       = $opts{g} || "60";
 my $lower_gc        = $opts{h} || "40";
 my $upper_tm        = $opts{i} || "68";
 my $lower_tm        = $opts{j} || "55";
+my $spec            = $opts{k} || "N";
 
 the defaults will be overwritten if a commandline parameter is added
    
