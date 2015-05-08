@@ -43,7 +43,7 @@ sub new {
 
 #get options from command line
 my %opts;
-getopt( 'abcdefghij', \%opts );
+getopt( 'abcdefghijk', \%opts );
 my $fasta           = $opts{a};
 my $five_prime_end  = $opts{b} || "150";
 my $three_prime_end = $opts{c} || "150";
@@ -54,6 +54,7 @@ my $higher_gc       = $opts{g} || "60";
 my $lower_gc        = $opts{h} || "40";
 my $upper_tm        = $opts{i} || "68";
 my $lower_tm        = $opts{j} || "55";
+my $spec            = $opts{k} || "N";
 
 =pod
  
@@ -61,13 +62,33 @@ my $lower_tm        = $opts{j} || "55";
  
 This script can have 10 parameters. The input fasta file name, the 
 5' and 3' search areas, the primer max and min, the GC% max and min,
- the Tm max and min, and whether to include a 3' GC clamp. Default 
- options are in place for all parameters except the input file. To 
- change these defaults, simply provide a parameter in the command-line
- e.g. -c 28 for primer upper length.
+ the Tm max and min, whether to include a 3' GC clamp, and whether
+ the primers are specific to the entire input file (Y) or just the 
+ specific sequence (N). Default options are in place for all parameters 
+ except the input file. To change these defaults, simply provide a 
+ parameter in the command-line e.g. -c 28 for primer upper length.
  All fasta format description lines must be unique for each gene
-
 =cut
+
+#write a separate file for specificity
+my $outfile = 'specificty.txt';
+open OUT, ">>$outfile";
+
+open IN, $fasta;
+while (<IN>) {
+    print OUT if ( $_ !~ /(>.+)/ );
+}
+close IN;
+close OUT;
+
+#stringify the specificity file
+open OUT, $outfile or die "Couldn't open file: $!";
+my $specificty = do { local $/; <OUT> };
+while (<OUT>) {
+    $specificty .= $_;
+}
+close OUT;
+$specificty =~ s/\s//g;
 
 #define strings and hashes
 my @array_length;
@@ -248,6 +269,8 @@ sub primerview {
 
             my $primer_end = $i + $kmer;
 
+            my $number_matches = () = $specificty =~ /$_/gi;
+
             #define dinucleotide repeats and repetitive sequence
             #and print results if statements are matched
             if (   open( FUSIONFILE, ">>$outputfile" )
@@ -265,7 +288,8 @@ sub primerview {
                 && $_ !~ /GCGCGCGC/i
                 && $_ !~ /CGCGCGCG/i
                 && $_ =~ m/gc$/i
-                && $clamp eq "Y" )
+                && $clamp eq "Y"
+                && $spec eq "N" )
             {
                 print
 "$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
@@ -299,7 +323,8 @@ sub primerview {
                 && $_ !~ /GCGCGCGC/i
                 && $_ !~ /CGCGCGCG/i
                 && $_ =~ m/cg$/i
-                && $clamp eq "Y" )
+                && $clamp eq "Y"
+                && $spec eq "N" )
             {
                 print
 "$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
@@ -332,7 +357,118 @@ sub primerview {
                 && $_ !~ /TATATATA/i
                 && $_ !~ /GCGCGCGC/i
                 && $_ !~ /CGCGCGCG/i
-                && $clamp eq "N" )
+                && $clamp eq "N"
+                && $spec eq "N" )
+            {
+                print
+"$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
+                push @array_length, $len_uniq;
+                push @array_name,   $id_uniq;
+                open( OLIGOS, ">>$out_image" ) or die;
+                print OLIGOS "$i\t$selfie_score\t$i\t$primer_end\n";
+                close(OLIGOS);
+
+                #declare output files
+                my $out = "$i.fa";
+                open( ALIGN, ">$out" ) or die;
+                print ALIGN ">$id\n$sequence\n>$i\n$_\n";
+                close(ALIGN);
+                print FUSIONFILE
+"$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
+                close(FUSIONFILE);
+            }
+
+            #define dinucleotide repeats and repetitive sequence
+            #and print results if statements are matched
+            if (   open( FUSIONFILE, ">>$outputfile" )
+                && $Tmrounded ge $lower_tm
+                && $Tmrounded le $upper_tm
+                && $percentGC ge $lower_gc
+                && $percentGC le $higher_gc
+                && $selfie_score < $selfie_cuttof
+                && $_ !~ /AAAAA/i
+                && $_ !~ /TTTTT/i
+                && $_ !~ /GGGGG/i
+                && $_ !~ /CCCCC/i
+                && $_ !~ /ATATATAT/i
+                && $_ !~ /TATATATA/i
+                && $_ !~ /GCGCGCGC/i
+                && $_ !~ /CGCGCGCG/i
+                && $_ =~ m/gc$/i
+                && $clamp eq "Y"
+                && $number_matches < 2
+                && $spec eq "Y" )
+            {
+                print
+"$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
+                push @array_length, $len_uniq;
+                push @array_name,   $id_uniq;
+                print FUSIONFILE
+"$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
+                open( OLIGOS, ">>$out_image" ) or die;
+                print OLIGOS "$i\t$selfie_score\t$i\t$primer_end\n";
+                close(OLIGOS);
+
+                #declare output files
+                my $out = "$i.fa";
+                open( ALIGN, ">$out" ) or die;
+                print ALIGN ">$id\n$sequence\n>$i\n$_\n";
+                close(ALIGN);
+                close(FUSIONFILE);
+            }
+            elsif (open( FUSIONFILE, ">>$outputfile" )
+                && $Tmrounded ge $lower_tm
+                && $Tmrounded le $upper_tm
+                && $percentGC ge $lower_gc
+                && $percentGC le $higher_gc
+                && $selfie_score < $selfie_cuttof
+                && $_ !~ /AAAAA/i
+                && $_ !~ /TTTTT/i
+                && $_ !~ /GGGGG/i
+                && $_ !~ /CCCCC/i
+                && $_ !~ /ATATATAT/i
+                && $_ !~ /TATATATA/i
+                && $_ !~ /GCGCGCGC/i
+                && $_ !~ /CGCGCGCG/i
+                && $_ =~ m/cg$/i
+                && $clamp eq "Y"
+                && $number_matches < 2
+                && $spec eq "Y" )
+            {
+                print
+"$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
+                push @array_length, $len_uniq;
+                push @array_name,   $id_uniq;
+                open( OLIGOS, ">>$out_image" ) or die;
+                print OLIGOS "$i\t$selfie_score\t$i\t$primer_end\n";
+                close(OLIGOS);
+
+                #declare output files
+                my $out = "$i.fa";
+                open( ALIGN, ">$out" ) or die;
+                print ALIGN ">$id\n$sequence\n>$i\n$_\n";
+                close(ALIGN);
+                print FUSIONFILE
+"$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
+                close(FUSIONFILE);
+            }
+            elsif (open( FUSIONFILE, ">>$outputfile" )
+                && $Tmrounded ge $lower_tm
+                && $Tmrounded le $upper_tm
+                && $percentGC ge $lower_gc
+                && $percentGC le $higher_gc
+                && $selfie_score < $selfie_cuttof
+                && $_ !~ /AAAAA/i
+                && $_ !~ /TTTTT/i
+                && $_ !~ /GGGGG/i
+                && $_ !~ /CCCCC/i
+                && $_ !~ /ATATATAT/i
+                && $_ !~ /TATATATA/i
+                && $_ !~ /GCGCGCGC/i
+                && $_ !~ /CGCGCGCG/i
+                && $clamp eq "N"
+                && $number_matches < 2
+                && $spec eq "Y" )
             {
                 print
 "$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
@@ -389,6 +525,8 @@ sub primerview {
             my $Tm_rounded = sprintf( "%0.1f", $Tm2 );
             my $primer_start_R = $j + $kmer;
 
+            my $number_matches_R = () = $specificty =~ /$_/gi;
+
             #define dinucleotide repeats and repetitive sequence
             #and print results if statements are matched
             if (   open( FUSIONFILE, ">>$outputfile" )
@@ -405,7 +543,8 @@ sub primerview {
                 && $revR !~ /TATATATA/i
                 && $revR !~ /GCGCGCGC/i
                 && $revR !~ /CGCGCGCG/i
-                && $clamp eq "N" )
+                && $clamp eq "N"
+                && $spec eq "N" )
             {
                 open( OLIGOS, ">>$out_image" ) or die;
                 print OLIGOS "$j\t$selfie_scoreR\t$primer_start_R\t$j\n";
@@ -439,7 +578,8 @@ sub primerview {
                 && $revR !~ /GCGCGCGC/i
                 && $revR !~ /CGCGCGCG/i
                 && $_ =~ m/^gc/i
-                && $clamp eq "Y" )
+                && $clamp eq "Y"
+                && $spec eq "N" )
             {
                 open( OLIGOS, ">>$out_image" ) or die;
                 print OLIGOS "$j\t$selfie_scoreR\t$primer_start_R\t$j\n";
@@ -473,7 +613,118 @@ sub primerview {
                 && $revR !~ /GCGCGCGC/i
                 && $revR !~ /CGCGCGCG/i
                 && $_ =~ m/^cg/i
-                && $clamp eq "Y" )
+                && $clamp eq "Y"
+                && $spec eq "N" )
+            {
+                open( OLIGOS, ">>$out_image" ) or die;
+                print OLIGOS "$j\t$selfie_scoreR\t$primer_start_R\t$j\n";
+                close(OLIGOS);
+                push @array_length, $len_uniq;
+                push @array_name,   $id_uniq;
+
+                #declare output files
+                my $out_r = "$j.fa";
+                open( ALIGN_R, ">$out_r" ) or die;
+                print ALIGN_R ">$id\n$sequence\n>$j\n$_\n";
+                close(ALIGN_R);
+                print
+"$id\t$j\t$Tm_rounded degC\tR:$revR\t$selfie_scoreR\t$percentGC_rounded%\n";
+                print FUSIONFILE
+"$id\t$j\t$Tm_rounded degC\tR:$revR\t$selfie_scoreR\t$percentGC_rounded%\n";
+                close(FUSIONFILE);
+            }
+
+            #define dinucleotide repeats and repetitive sequence
+            #and print results if statements are matched
+            elsif (open( FUSIONFILE, ">>$outputfile" )
+                && $Tm_rounded ge $lower_tm
+                && $Tm_rounded le $upper_tm
+                && $percent_GC ge $lower_gc
+                && $percent_GC le $higher_gc
+                && $selfie_scoreR < $selfie_cuttof
+                && $revR !~ /AAAAA/i
+                && $revR !~ /TTTTT/i
+                && $revR !~ /GGGGG/i
+                && $revR !~ /CCCCC/i
+                && $revR !~ /ATATATAT/i
+                && $revR !~ /TATATATA/i
+                && $revR !~ /GCGCGCGC/i
+                && $revR !~ /CGCGCGCG/i
+                && $clamp eq "N"
+                && $number_matches_R < 2
+                && $spec eq "Y" )
+            {
+                open( OLIGOS, ">>$out_image" ) or die;
+                print OLIGOS "$j\t$selfie_scoreR\t$primer_start_R\t$j\n";
+                close(OLIGOS);
+                push @array_length, $len_uniq;
+                push @array_name,   $id_uniq;
+
+                #declare output files
+                my $out_r = "$j.fa";
+                open( ALIGN_R, ">$out_r" ) or die;
+                print ALIGN_R ">$id\n$sequence\n>$j\n$_\n";
+                close(ALIGN_R);
+                print
+"$id\t$j\t$Tm_rounded degC\tR:$revR\t$selfie_scoreR\t$percentGC_rounded%\n";
+                print FUSIONFILE
+"$id\t$j\t$Tm_rounded degC\tR:$revR\t$selfie_scoreR\t$percentGC_rounded%\n";
+                close(FUSIONFILE);
+            }
+            elsif (open( FUSIONFILE, ">>$outputfile" )
+                && $Tm_rounded ge $lower_tm
+                && $Tm_rounded le $upper_tm
+                && $percent_GC ge $lower_gc
+                && $percent_GC le $higher_gc
+                && $selfie_scoreR < $selfie_cuttof
+                && $revR !~ /AAAAA/i
+                && $revR !~ /TTTTT/i
+                && $revR !~ /GGGGG/i
+                && $revR !~ /CCCCC/i
+                && $revR !~ /ATATATAT/i
+                && $revR !~ /TATATATA/i
+                && $revR !~ /GCGCGCGC/i
+                && $revR !~ /CGCGCGCG/i
+                && $_ =~ m/^gc/i
+                && $clamp eq "Y"
+                && $number_matches_R < 2
+                && $spec eq "Y" )
+            {
+                open( OLIGOS, ">>$out_image" ) or die;
+                print OLIGOS "$j\t$selfie_scoreR\t$primer_start_R\t$j\n";
+                close(OLIGOS);
+                push @array_length, $len_uniq;
+                push @array_name,   $id_uniq;
+
+                #declare output files
+                my $out_r = "$j.fa";
+                open( ALIGN_R, ">$out_r" ) or die;
+                print ALIGN_R ">$id\n$sequence\n>$j\n$_\n";
+                close(ALIGN_R);
+                print
+"$id\t$j\t$Tm_rounded degC\tR:$revR\t$selfie_scoreR\t$percentGC_rounded%\n";
+                print FUSIONFILE
+"$id\t$j\t$Tm_rounded degC\tR:$revR\t$selfie_scoreR\t$percentGC_rounded%\n";
+                close(FUSIONFILE);
+            }
+            elsif (open( FUSIONFILE, ">>$outputfile" )
+                && $Tm_rounded ge $lower_tm
+                && $Tm_rounded le $upper_tm
+                && $percent_GC ge $lower_gc
+                && $percent_GC le $higher_gc
+                && $selfie_scoreR < $selfie_cuttof
+                && $revR !~ /AAAAA/i
+                && $revR !~ /TTTTT/i
+                && $revR !~ /GGGGG/i
+                && $revR !~ /CCCCC/i
+                && $revR !~ /ATATATAT/i
+                && $revR !~ /TATATATA/i
+                && $revR !~ /GCGCGCGC/i
+                && $revR !~ /CGCGCGCG/i
+                && $_ =~ m/^cg/i
+                && $clamp eq "Y"
+                && $number_matches_R < 2
+                && $spec eq "Y" )
             {
                 open( OLIGOS, ">>$out_image" ) or die;
                 print OLIGOS "$j\t$selfie_scoreR\t$primer_start_R\t$j\n";
@@ -496,6 +747,8 @@ sub primerview {
     }
 
 }
+
+unlink $outfile;
 
 ####################################
 sub calclongTm {
@@ -788,27 +1041,20 @@ sub clean_up {
 ####################################
 1;
 
-
-
-
 =pod
  
 =head1 INPUT PARAMETERS
  
 PrimerView
 Author: Damien O'Halloran, The George Washington University, 2015
-
 To run simply execute as follows specifying the Getopt arguments: 
 >perl primerview_driver.pl [-a filename e.g. test_seqs.fasta] 
    [-b 5' search area, integer] [-c 3' search area, integer] 
 [-d primer max, integer] [-e primer min, integer] [-f GC clamp Y or N]
 [-g upper GC, integer] [-h lower GC, integer] [-i upper Tm, integer] 
-[-j lower Tm, integer] 
-
+[-j lower Tm, integer] [-k specificty across entire input file, Y or N]
 example settings: ">perl primerview_driver.pl -a test_seqs.fasta"
-
 default settings are as follows:
-
 my $fasta           = $opts{a};
 my $five_prime_end  = $opts{b} || "150";
 my $three_prime_end = $opts{c} || "150";
@@ -819,18 +1065,16 @@ my $higher_gc       = $opts{g} || "60";
 my $lower_gc        = $opts{h} || "40";
 my $upper_tm        = $opts{i} || "68";
 my $lower_tm        = $opts{j} || "55";
-
+my $spec            = $opts{k} || "N";
 the defaults will be overwritten if a commandline parameter is added
    
 where:  'primerview_driver.pl' is a simple driver for the primerview package, 
 and 'test_seqs.fasta' is a fasta file with sample query sequences.
-
 if only the distribution graphic of primers is required
 then cancel the following subs:
 $tmp->align_muscle();
 $tmp->align_convert();
 $tmp->graphics();
-
 you must have muscle.exe in your PATH and you must have following BioPerl modules: 
 ##  Bio::SeqIO 
 ##  Bio::Tools::Run::Alignment::Muscle 
@@ -838,8 +1082,8 @@ you must have muscle.exe in your PATH and you must have following BioPerl module
 ##  Bio::Align::Graphics
 ##  Bio::Graphics
 ##  Bio::SeqFeature::Generic
-
 WARNING: the subroutine 'clean_up' deletes the '.fa', '.fa.fasta', 
 and '.fa.fasta.aln' extension files generated from cwd, 
-
+ 
 =cut
+
