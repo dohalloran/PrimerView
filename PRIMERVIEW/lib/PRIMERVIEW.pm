@@ -66,7 +66,7 @@ This script can have 11 input parameters: The input fasta file, the
  the primers are specific to the entire input file (Y) or just the 
  specific sequence (N). Default options are in place for all parameters 
  except the input file. To change these defaults, simply provide a 
- parameter in the command-line e.g. -c 28 for primer upper length.
+ parameter in the command-line e.g. -d 28 for primer upper length.
  All fasta format description lines must be unique for each gene
 =cut
 
