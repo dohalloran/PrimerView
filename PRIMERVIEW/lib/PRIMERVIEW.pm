@@ -263,7 +263,7 @@ sub primerview {
                 $Tm = calcTm( $_, 100, 50 );
             }
             else {
-                $Tm = calclongTm( $_, 100, 50 );
+                $Tm = calclongTm( $_, 100, 50, $percentGCrounded );
             }
             my $Tmrounded = sprintf( "%0.1f", $Tm );
 
@@ -520,7 +520,7 @@ sub primerview {
                 $Tm2 = calcTm( $_, 100, 50 );
             }
             else {
-                $Tm2 = calclongTm( $_, 100, 50 );
+                $Tm2 = calclongTm( $_, 100, 50, $percentGC_rounded );
             }
             my $Tm_rounded = sprintf( "%0.1f", $Tm2 );
             my $primer_start_R = $j + $kmer;
@@ -752,11 +752,12 @@ unlink $outfile;
 
 ####################################
 sub calclongTm {
-    my $sequence = shift;
-    my $DNA_nM   = shift;
-    my $K_mM     = shift;
+    my $sequence  = shift;
+    my $DNA_nM    = shift;
+    my $K_mM      = shift;
+    my $percentGC = shift;
     return 81.5 + ( 16.6 * ( log( $K_mM / 1000.0 ) / log(10) ) ) +
-      ( 41.0 * percentGC($sequence) ) - ( 600.0 / length($sequence) );
+      ( 41.0 * $percentGC ) - ( 600.0 / length($sequence) );
 }
 
 ####################################
