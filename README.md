@@ -30,7 +30,7 @@ Run as follows:
   
 ##@ARGV  
   `-a test_seqs.fasta` //filename  
-   `-b 5' 200` //5' search area    
+   `-b 200` //5' search area    
    `-c 200` // 3' search area    
    `-d 28` //primer max    
    `-e 20` //primer min   
