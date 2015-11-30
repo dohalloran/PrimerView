@@ -48,7 +48,7 @@ All contributions are welcome.
 If you have any problem or suggestion please open an issue [here](https://github.com/dohalloran/PrimerView/issues).
 
 ## License 
-The MIT License
+GNU GENERAL PUBLIC LICENSE
 
 
 
