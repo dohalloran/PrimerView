@@ -41,7 +41,14 @@ Run as follows:
    `-j 55` // lower Tm  
    `-k Y` //specificty across entire input file, Y or N  
 
+## Contributing
+All contributions are welcome.
 
+## Support
+If you have any problem or suggestion please open an issue [here](https://github.com/dohalloran/PrimerView/issues).
+
+## License 
+The MIT License
 
 
 
