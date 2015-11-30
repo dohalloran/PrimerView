@@ -21,9 +21,7 @@ Bio::AlignIO
 Bio::Align::Graphics  
 Bio::Graphics  
 Bio::SeqFeature::Generic  
-
 WARNING: the subroutine 'clean_up' deletes the '.fa', '.fa.fasta', and '.fa.fasta.aln' extension files generated from cwd  
-
 3. Start with a sequence file in FASTA format (for example see `test_seqs.fasta`)  
 
 ##Usage 
