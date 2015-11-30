@@ -756,8 +756,9 @@ sub calclongTm {
     my $DNA_nM    = shift;
     my $K_mM      = shift;
     my $percentGC = shift;
+    my $new_GC    = $percentGC / 100;
     return 81.5 + ( 16.6 * ( log( $K_mM / 1000.0 ) / log(10) ) ) +
-      ( 41.0 * $percentGC ) - ( 600.0 / length($sequence) );
+      ( 41.0 * $new_GC ) - ( 600.0 / length($sequence) );
 }
 
 ####################################
