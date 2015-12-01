@@ -8,8 +8,8 @@
 use strict;
 use warnings;
 
-use Test::More tests => 1;
-BEGIN { use_ok('PRIMERVIEW') };
+use Test::More tests => 2;
+BEGIN { use_ok('PRIMERVIEW'), use_ok('SequenceIO') };
 
 #########################
 

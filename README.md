@@ -1,4 +1,4 @@
-##PrimerView
+##PrimerView version 2.0
 Author: Damien O'Halloran, The George Washington University, 2015
 
 ##Installation
@@ -29,7 +29,7 @@ Run as follows:
   `perl primerview_driver.pl`  
   
 ##GetOpts 
-  `-a test_seqs.fasta` //filename  
+   `-a test_seqs.fasta` //filename  
    `-b 200` //5' search area    
    `-c 200` // 3' search area    
    `-d 28` //primer max    

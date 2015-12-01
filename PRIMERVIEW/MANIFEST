@@ -3,4 +3,5 @@ MANIFEST
 README
 t/PRIMERVIEW.t
 lib/PRIMERVIEW.pm
+lib/SequenceIO.pm
 
