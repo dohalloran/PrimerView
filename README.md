@@ -28,7 +28,7 @@ WARNING: the subroutine 'clean_up' deletes the '.fa', '.fa.fasta', and '.fa.fast
 Run as follows:  
   `perl primerview_driver.pl`  
   
-##Get opts 
+##GetOpts 
   `-a test_seqs.fasta` //filename  
    `-b 200` //5' search area    
    `-c 200` // 3' search area    
