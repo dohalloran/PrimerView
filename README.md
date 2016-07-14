@@ -1,6 +1,8 @@
 ##PrimerView version 2.0
 Author: Damien O'Halloran, The George Washington University, 2015
 
+[![DOI](https://zenodo.org/badge/23283/dohalloran/PrimerView.svg)](https://zenodo.org/badge/latestdoi/23283/dohalloran/PrimerView)
+ 
 ##Installation
 1. Download and extract the primerview.zip file  
 `tar -xzvf primerview.zip`  
