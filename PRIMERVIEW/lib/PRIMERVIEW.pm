@@ -249,7 +249,8 @@ sub primerview {
 ########################################>>>>>>>>>>>>>>>>>>>>>>>>
 ########################################>>>>>>>>>>>>>>>>>>>>>>>>
 ################################################################################>>>>>>>>>>>>>>>>>>>>>>>>
-########################################################################################################################>>>>>>>>>>>>>>>>>>>>>>>>################################################################################################################################################################>>>>>>>>>>>>>>>>>>>>>>>>
+########################################################################################################################>>>>>>>>>>>>>>>>>>>>>>>>
+################################################################################################################################################################>>>>>>>>>>>>>>>>>>>>>>>>
     #start counting
     my $start = 1;
     for ( my $i = $start - 1 ; $i < $five_prime_end - 1 ; $i += 2 ) {
@@ -290,9 +291,8 @@ sub primerview {
             && $percentGC le $higher_gc
             && $selfie_score < $selfie_cuttof
             && calcRepeat($_) == 1
-            && $_ =~ m/gc$/i
-            && $clamp eq "Y"
-            && $spec eq "N" )
+            && checkClamp_($_, $clamp) == 1 
+            && checkSpecific_($number_matches, $spec) == 1 )
         {
             print
 "$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
@@ -309,150 +309,6 @@ sub primerview {
             open( ALIGN, ">$out" ) or die;
             print ALIGN ">$id\n$sequence\n>$i\n$_\n";
             close(ALIGN);
-            close(FUSIONFILE);
-        }
-        elsif (open( FUSIONFILE, ">>$outputfile" )
-            && $Tmrounded ge $lower_tm
-            && $Tmrounded le $upper_tm
-            && $percentGC ge $lower_gc
-            && $percentGC le $higher_gc
-            && $selfie_score < $selfie_cuttof
-            && calcRepeat($_) == 1
-            && $_ =~ m/cg$/i
-            && $clamp eq "Y"
-            && $spec eq "N" )
-        {
-            print
-"$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
-            push @array_length, $len_uniq;
-            push @array_name,   $id_uniq;
-            open( OLIGOS, ">>$out_image" ) or die;
-            print OLIGOS "$i\t$selfie_score\t$i\t$primer_end\n";
-            close(OLIGOS);
-
-            #declare output files
-            my $out = "$i.fa";
-            open( ALIGN, ">$out" ) or die;
-            print ALIGN ">$id\n$sequence\n>$i\n$_\n";
-            close(ALIGN);
-            print FUSIONFILE
-"$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
-            close(FUSIONFILE);
-        }
-        elsif (open( FUSIONFILE, ">>$outputfile" )
-            && $Tmrounded ge $lower_tm
-            && $Tmrounded le $upper_tm
-            && $percentGC ge $lower_gc
-            && $percentGC le $higher_gc
-            && $selfie_score < $selfie_cuttof
-            && calcRepeat($_) == 1
-            && $clamp eq "N"
-            && $spec eq "N" )
-        {
-            print
-"$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
-            push @array_length, $len_uniq;
-            push @array_name,   $id_uniq;
-            open( OLIGOS, ">>$out_image" ) or die;
-            print OLIGOS "$i\t$selfie_score\t$i\t$primer_end\n";
-            close(OLIGOS);
-
-            #declare output files
-            my $out = "$i.fa";
-            open( ALIGN, ">$out" ) or die;
-            print ALIGN ">$id\n$sequence\n>$i\n$_\n";
-            close(ALIGN);
-            print FUSIONFILE
-"$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
-            close(FUSIONFILE);
-        }
-
-        #define dinucleotide repeats and repetitive sequence
-        #and print results if statements are matched
-        if (   open( FUSIONFILE, ">>$outputfile" )
-            && $Tmrounded ge $lower_tm
-            && $Tmrounded le $upper_tm
-            && $percentGC ge $lower_gc
-            && $percentGC le $higher_gc
-            && $selfie_score < $selfie_cuttof
-            && calcRepeat($_) == 1
-            && $_ =~ m/gc$/i
-            && $clamp eq "Y"
-            && $number_matches < 2
-            && $spec eq "Y" )
-        {
-            print
-"$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
-            push @array_length, $len_uniq;
-            push @array_name,   $id_uniq;
-            print FUSIONFILE
-"$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
-            open( OLIGOS, ">>$out_image" ) or die;
-            print OLIGOS "$i\t$selfie_score\t$i\t$primer_end\n";
-            close(OLIGOS);
-
-            #declare output files
-            my $out = "$i.fa";
-            open( ALIGN, ">$out" ) or die;
-            print ALIGN ">$id\n$sequence\n>$i\n$_\n";
-            close(ALIGN);
-            close(FUSIONFILE);
-        }
-        elsif (open( FUSIONFILE, ">>$outputfile" )
-            && $Tmrounded ge $lower_tm
-            && $Tmrounded le $upper_tm
-            && $percentGC ge $lower_gc
-            && $percentGC le $higher_gc
-            && $selfie_score < $selfie_cuttof
-            && calcRepeat($_) == 1
-            && $_ =~ m/cg$/i
-            && $clamp eq "Y"
-            && $number_matches < 2
-            && $spec eq "Y" )
-        {
-            print
-"$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
-            push @array_length, $len_uniq;
-            push @array_name,   $id_uniq;
-            open( OLIGOS, ">>$out_image" ) or die;
-            print OLIGOS "$i\t$selfie_score\t$i\t$primer_end\n";
-            close(OLIGOS);
-
-            #declare output files
-            my $out = "$i.fa";
-            open( ALIGN, ">$out" ) or die;
-            print ALIGN ">$id\n$sequence\n>$i\n$_\n";
-            close(ALIGN);
-            print FUSIONFILE
-"$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
-            close(FUSIONFILE);
-        }
-        elsif (open( FUSIONFILE, ">>$outputfile" )
-            && $Tmrounded ge $lower_tm
-            && $Tmrounded le $upper_tm
-            && $percentGC ge $lower_gc
-            && $percentGC le $higher_gc
-            && $selfie_score < $selfie_cuttof
-            && calcRepeat($_) == 1
-            && $clamp eq "N"
-            && $number_matches < 2
-            && $spec eq "Y" )
-        {
-            print
-"$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
-            push @array_length, $len_uniq;
-            push @array_name,   $id_uniq;
-            open( OLIGOS, ">>$out_image" ) or die;
-            print OLIGOS "$i\t$selfie_score\t$i\t$primer_end\n";
-            close(OLIGOS);
-
-            #declare output files
-            my $out = "$i.fa";
-            open( ALIGN, ">$out" ) or die;
-            print ALIGN ">$id\n$sequence\n>$i\n$_\n";
-            close(ALIGN);
-            print FUSIONFILE
-"$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
             close(FUSIONFILE);
         }
     }
@@ -513,153 +369,8 @@ sub primerview {
             && $percent_GC le $higher_gc
             && $selfie_scoreR < $selfie_cuttof
             && calcRepeat($revR) == 1
-            && $clamp eq "N"
-            && $spec eq "N" )
-        {
-            open( OLIGOS, ">>$out_image" ) or die;
-            print OLIGOS "$j\t$selfie_scoreR\t$primer_start_R\t$j\n";
-            close(OLIGOS);
-            push @array_length, $len_uniq;
-            push @array_name,   $id_uniq;
-
-            #declare output files
-            my $out_r = "$j.fa";
-            open( ALIGN_R, ">$out_r" ) or die;
-            print ALIGN_R ">$id\n$sequence\n>$j\n$_\n";
-            close(ALIGN_R);
-            print
-"$id\t$j\t$Tm_rounded degC\tR:$revR\t$selfie_scoreR\t$percentGC_rounded%\n";
-            print FUSIONFILE
-"$id\t$j\t$Tm_rounded degC\tR:$revR\t$selfie_scoreR\t$percentGC_rounded%\n";
-            close(FUSIONFILE);
-        }
-        elsif (open( FUSIONFILE, ">>$outputfile" )
-            && $Tm_rounded ge $lower_tm
-            && $Tm_rounded le $upper_tm
-            && $percent_GC ge $lower_gc
-            && $percent_GC le $higher_gc
-            && $selfie_scoreR < $selfie_cuttof
-            && calcRepeat($revR) == 1
-            && $_ =~ m/^gc/i
-            && $clamp eq "Y"
-            && $spec eq "N" )
-        {
-            open( OLIGOS, ">>$out_image" ) or die;
-            print OLIGOS "$j\t$selfie_scoreR\t$primer_start_R\t$j\n";
-            close(OLIGOS);
-            push @array_length, $len_uniq;
-            push @array_name,   $id_uniq;
-
-            #declare output files
-            my $out_r = "$j.fa";
-            open( ALIGN_R, ">$out_r" ) or die;
-            print ALIGN_R ">$id\n$sequence\n>$j\n$_\n";
-            close(ALIGN_R);
-            print
-"$id\t$j\t$Tm_rounded degC\tR:$revR\t$selfie_scoreR\t$percentGC_rounded%\n";
-            print FUSIONFILE
-"$id\t$j\t$Tm_rounded degC\tR:$revR\t$selfie_scoreR\t$percentGC_rounded%\n";
-            close(FUSIONFILE);
-        }
-        elsif (open( FUSIONFILE, ">>$outputfile" )
-            && $Tm_rounded ge $lower_tm
-            && $Tm_rounded le $upper_tm
-            && $percent_GC ge $lower_gc
-            && $percent_GC le $higher_gc
-            && $selfie_scoreR < $selfie_cuttof
-            && calcRepeat($revR) == 1
-            && $_ =~ m/^cg/i
-            && $clamp eq "Y"
-            && $spec eq "N" )
-        {
-            open( OLIGOS, ">>$out_image" ) or die;
-            print OLIGOS "$j\t$selfie_scoreR\t$primer_start_R\t$j\n";
-            close(OLIGOS);
-            push @array_length, $len_uniq;
-            push @array_name,   $id_uniq;
-
-            #declare output files
-            my $out_r = "$j.fa";
-            open( ALIGN_R, ">$out_r" ) or die;
-            print ALIGN_R ">$id\n$sequence\n>$j\n$_\n";
-            close(ALIGN_R);
-            print
-"$id\t$j\t$Tm_rounded degC\tR:$revR\t$selfie_scoreR\t$percentGC_rounded%\n";
-            print FUSIONFILE
-"$id\t$j\t$Tm_rounded degC\tR:$revR\t$selfie_scoreR\t$percentGC_rounded%\n";
-            close(FUSIONFILE);
-        }
-
-        #define dinucleotide repeats and repetitive sequence
-        #and print results if statements are matched
-        elsif (open( FUSIONFILE, ">>$outputfile" )
-            && $Tm_rounded ge $lower_tm
-            && $Tm_rounded le $upper_tm
-            && $percent_GC ge $lower_gc
-            && $percent_GC le $higher_gc
-            && $selfie_scoreR < $selfie_cuttof
-            && calcRepeat($revR) == 1
-            && $clamp eq "N"
-            && $number_matches_R < 2
-            && $spec eq "Y" )
-        {
-            open( OLIGOS, ">>$out_image" ) or die;
-            print OLIGOS "$j\t$selfie_scoreR\t$primer_start_R\t$j\n";
-            close(OLIGOS);
-            push @array_length, $len_uniq;
-            push @array_name,   $id_uniq;
-
-            #declare output files
-            my $out_r = "$j.fa";
-            open( ALIGN_R, ">$out_r" ) or die;
-            print ALIGN_R ">$id\n$sequence\n>$j\n$_\n";
-            close(ALIGN_R);
-            print
-"$id\t$j\t$Tm_rounded degC\tR:$revR\t$selfie_scoreR\t$percentGC_rounded%\n";
-            print FUSIONFILE
-"$id\t$j\t$Tm_rounded degC\tR:$revR\t$selfie_scoreR\t$percentGC_rounded%\n";
-            close(FUSIONFILE);
-        }
-        elsif (open( FUSIONFILE, ">>$outputfile" )
-            && $Tm_rounded ge $lower_tm
-            && $Tm_rounded le $upper_tm
-            && $percent_GC ge $lower_gc
-            && $percent_GC le $higher_gc
-            && $selfie_scoreR < $selfie_cuttof
-            && calcRepeat($revR) == 1
-            && $_ =~ m/^gc/i
-            && $clamp eq "Y"
-            && $number_matches_R < 2
-            && $spec eq "Y" )
-        {
-            open( OLIGOS, ">>$out_image" ) or die;
-            print OLIGOS "$j\t$selfie_scoreR\t$primer_start_R\t$j\n";
-            close(OLIGOS);
-            push @array_length, $len_uniq;
-            push @array_name,   $id_uniq;
-
-            #declare output files
-            my $out_r = "$j.fa";
-            open( ALIGN_R, ">$out_r" ) or die;
-            print ALIGN_R ">$id\n$sequence\n>$j\n$_\n";
-            close(ALIGN_R);
-            print
-"$id\t$j\t$Tm_rounded degC\tR:$revR\t$selfie_scoreR\t$percentGC_rounded%\n";
-            print FUSIONFILE
-"$id\t$j\t$Tm_rounded degC\tR:$revR\t$selfie_scoreR\t$percentGC_rounded%\n";
-            close(FUSIONFILE);
-        }
-        elsif (open( FUSIONFILE, ">>$outputfile" )
-            && $Tm_rounded ge $lower_tm
-            && $Tm_rounded le $upper_tm
-            && $percent_GC ge $lower_gc
-            && $percent_GC le $higher_gc
-            && $selfie_scoreR < $selfie_cuttof
-            && calcRepeat($revR) == 1
-            && $_ =~ m/^cg/i
-            && $clamp eq "Y"
-            && $number_matches_R < 2
-            && $spec eq "Y" )
+            && checkClamp_($revR, $clamp) == 1 
+            && checkSpecific_($number_matches_R, $spec) == 1 )
         {
             open( OLIGOS, ">>$out_image" ) or die;
             print OLIGOS "$j\t$selfie_scoreR\t$primer_start_R\t$j\n";
@@ -690,6 +401,50 @@ sub primerview {
 ########################################
 ########################################
 
+####################################
+=head1 checkClamp_
+ Title   :  checkClamp_
+ Usage   :  -command => sub { primer_dimer($oligo, $clamp); }
+ Function:  checks to see if gc clamp paramter is met
+ Returns :  1 (true) or 0 (false)
+=cut
+
+sub checkClamp_ {
+    my $checkPrimer = shift;
+    my $clampChoice = shift;
+
+        if ($clampChoice eq "N"){
+            return 1;
+        }
+        elsif ($clampChoice eq "Y" && $checkPrimer =~ m/cg$/i or $checkPrimer =~ m/gc$/i or $checkPrimer =~ m/gg$/i or $checkPrimer =~ m/cc$/i){
+            return 1;
+        }
+        else {
+            return 0;
+        }  
+}
+####################################
+=head1 checkSpecific_
+ Title   :  checkSpecific_
+ Usage   :  -command => sub { primer_dimer($number_matches, $spec); }
+ Function:  checks to see if sequence specificty paramter is met
+ Returns :  1 (true) or 0 (false)
+=cut
+
+sub checkSpecific_ {
+    my $specificNumber = shift;
+    my $specificChoice = shift;
+
+        if ($specificChoice eq "N"){
+            return 1;
+        }
+        elsif ($specificChoice eq "Y" && $specificNumber == 1){
+            return 1;
+        }
+        else {
+            return 0;
+        }  
+}
 ####################################
 sub calclongTm {
     my $sequence  = shift;
