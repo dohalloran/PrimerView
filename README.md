@@ -7,11 +7,13 @@ Author: Damien O'Halloran, The George Washington University, 2015
 1. Download and extract the primerview.zip file  
 `tar -xzvf primerview.zip`  
 2. The extracted dir will be called PRIMERVIEW  
-  `cd PRIMERVIEW`  
-  `perl Makefile.PL`  
-  `make`  
-  `make test`  
-  `make install`  
+```cmd
+  cd PRIMERVIEW  
+  perl Makefile.PL  
+  make  
+  make test  
+  make install 
+```  
   
 ##Getting Started  
 1. You must have `muscle.exe` in your PATH  
@@ -30,19 +32,20 @@ WARNING: the subroutine 'clean_up' deletes the '.fa', '.fa.fasta', and '.fa.fast
 Run as follows:  
   `perl primerview_driver.pl`  
   
-##GetOpts 
-   `-a test_seqs.fasta` //filename  
-   `-b 200` //5' search area    
-   `-c 200` // 3' search area    
-   `-d 28` //primer max    
-   `-e 20` //primer min   
-   `-f Y` // GC clamp Y or N  
-   `-g 60` //upper GC%  
-   `-h 40` //lower GC%  
-   `-i 70` //upper Tm  
-   `-j 55` // lower Tm  
-   `-k Y` //specificty across entire input file, Y or N  
-
+##GetOpts
+```perl
+   -a test_seqs.fasta # filename   
+   -b 200 # 5' search area    
+   -c 200 # 3' search area    
+   -d 28 # primer max    
+   -e 20 # primer min   
+   -f Y # GC clamp Y or N  
+   -g 60 # upper GC%  
+   -h 40 # lower GC%  
+   -i 70 # upper Tm  
+   -j 55 # lower Tm  
+   -k Y # specificty across entire input file, Y or N  
+```
 ## Contributing
 All contributions are welcome.
 
