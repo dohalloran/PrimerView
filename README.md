@@ -1,9 +1,9 @@
-##PrimerView version 2.0
+## PrimerView version 2.0
 Author: Damien O'Halloran, The George Washington University, 2015
 
 [![DOI](https://zenodo.org/badge/23283/dohalloran/PrimerView.svg)](https://zenodo.org/badge/latestdoi/23283/dohalloran/PrimerView)
  
-##Installation
+## Installation
 1. Download and extract the primerview.zip file  
 `tar -xzvf primerview.zip`  
 2. The extracted dir will be called PRIMERVIEW  
@@ -15,7 +15,7 @@ Author: Damien O'Halloran, The George Washington University, 2015
   make install 
 ```  
   
-##Getting Started  
+## Getting Started  
 1. You must have `muscle.exe` in your PATH  
 [Click here to get MUSCLE] (http://www.drive5.com/muscle/)  
 2. Must have following [BioPerl] (https://github.com/bioperl) modules:  
@@ -28,11 +28,11 @@ Bio::SeqFeature::Generic
 WARNING: the subroutine 'clean_up' deletes the '.fa', '.fa.fasta', and '.fa.fasta.aln' extension files generated from cwd  
 3. Start with a sequence file in FASTA format (for example see `test_seqs.fasta`)  
 
-##Usage 
+## Usage 
 Run as follows:  
   `perl primerview_driver.pl`  
   
-##GetOpts
+## GetOpts
 ```perl
    -a test_seqs.fasta # filename   
    -b 200 # 5' search area    
