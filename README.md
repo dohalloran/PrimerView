@@ -17,8 +17,8 @@ Author: Damien O'Halloran, The George Washington University, 2015
   
 ## Getting Started  
 1. You must have `muscle.exe` in your PATH  
-[Click here to get MUSCLE] (http://www.drive5.com/muscle/)  
-2. Must have following [BioPerl] (https://github.com/bioperl) modules:  
+[Click here to get MUSCLE](http://www.drive5.com/muscle/)  
+2. Must have following [BioPerl](https://github.com/bioperl) modules:  
 Bio::SeqIO  
 Bio::Tools::Run::Alignment::Muscle  
 Bio::AlignIO  
