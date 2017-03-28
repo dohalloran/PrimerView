@@ -19,44 +19,58 @@
 # POD documentation - main docs before the code
 
 =head1 NAME
-PrimerView - generates graphical outputs that map the position and distribution of primers to the target sequence
+
+ PrimerView - generates graphical outputs that map the position and distribution of primers to the target sequence
+ 
 =head1 SYNOPSIS
-use strict;
-use warnings;
-use PRIMERVIEW;
 
-my $in_file = "test_seqs.fasta";
+ use strict;
+ use warnings;
+ use PRIMERVIEW;
 
-my $tmp = PRIMERVIEW->new();
- 
- $tmp->load_selections(  
-    in_file        => $in_file, 
-    single_view    => "1",   
-    batch_view     => "1",      
-    clean_up        => "1"   
- );   
- 
-  $tmp->run_primerview();  
+ my $in_file = "test_seqs.fasta";
+ my $tmp = PRIMERVIEW->new();
+
+  $tmp->load_selections(  
+     in_file        => $in_file, 
+     single_view    => "1",   
+     batch_view     => "1",      
+     clean_up        => "1"   
+     );   
+   $tmp->run_primerview();  
+
 =head1 DESCRIPTION
+
  designs forward and reverse primers from multi-sequence datasets, and generates graphical outputs that map the position and distribution of primers to the target sequence
+
 =head1 FEEDBACK
-damienoh@gwu.edu
+
+ damienoh@gwu.edu
+
 =head2 Mailing Lists
+
 User feedback is an integral part of the evolution of this module. Send your comments and suggestions preferably to one of the mailing lists.  Your participation is much appreciated.
-  
+
 =head2 Support 
+
 Please direct usage questions or support issues to:
+
 <damienoh@gwu.edu>
+
 Please include a thorough description of the problem with code and data examples if at all possible.
+
 =head2 Reporting Bugs
+
 Report bugs to the GitHub bug tracking system to help keep track of the bugs and their resolution.  Bug reports can be submitted via the GitHub page:
  https://github.com/dohalloran/PrimerView/issues
-  
+
 =head1 AUTHORS - Damien OHalloran
+
 Email: damienoh@gwu.edu
 =head1 APPENDIX
-The rest of the documentation details each of the object
-methods.
+
+The rest of the documentation details each of the object methods
+
 =cut
 
 # Let the code begin...
@@ -82,11 +96,13 @@ our $VERSION = '3.0';
 #########################
 
 =head2 new()
+
  Title   : new()
- Usage   : my $tmp = PRIMERVIEW->new();
+ Usage   : my $tmp = PRIMERVIEW->new()
  Function: constructor routine
  Returns : a blessed object
  Args    : none 
+ 
 =cut
 
 ##################################
@@ -102,13 +118,14 @@ sub new {
 ##################################
 
 =head2 load_selections()
+
  Title   : load_selections()
  Usage   :  $tmp->load_selections(  
                 in_file        => $in_file, 
                 single_view    => "1",   
                 batch_view     => "1",      
                 clean_up        => "1"   
-            );  
+            )  
  Function: Populates the user data into $self hash
  Returns : nothing returned
  Args    : 
@@ -116,6 +133,7 @@ sub new {
  -single_view, return a single graphical file depicting the primer mapped to the sequence for every primer 1=Yes, 0=No 
  -batch_view, return a single graphical file depicting all primers mapped to the sequence for each sequence 1=Yes, 0=No 
  -cleanup, option to delete tmp file: 1=Yes, 0=No
+ 
 =cut
 
 ##################################
@@ -152,11 +170,13 @@ my @array_name;
 ##################################
 
 =head2 run_primerview()
+
  Title   : run_primerview()
- Usage   : $tmp->run_primerview();  
+ Usage   : $tmp->run_primerview()  
  Function: parses input and executes commands based on %arg
  Returns : graphical files based on user selections
  Args    : none provided
+ 
 =cut
 
 ##################################
@@ -204,11 +224,13 @@ sub run_primerview {
 ##################################
 
 =head2 parser()
+
  Title   : parser()
- Usage   : parser($input_file);  
+ Usage   : parser($input_file)  
  Function: parses the contents of the fasta file into ids and sequences
  Returns : send back a reference to the arrays containing seqs and ids
  Args    : fasta file 
+ 
 =cut
 
 ##################################
@@ -240,14 +262,16 @@ sub parser {
 ##################################
 
 =head2 _primerview()
+
  Title   : _primerview()
  Usage   : _primerview(
             $fasta,    $temp_seq, $len_seq, $shift_id,
             $sequence, $id_uniq,  $len_uniq
-        ); 
+        )
  Function: runs and parses the primer3 side of things
  Returns : primer feature files
  Args    : $fasta,    $temp_seq, $len_seq, $shift_id, $sequence, $id_uniq,  $len_uniq
+ 
 =cut
 
 ##################################
@@ -327,11 +351,13 @@ sub _primerview {
 ##################################
 
 =head2 _align_muscle()
+
  Title   : _align_muscle()
- Usage   : _align_muscle();  
+ Usage   : _align_muscle() 
  Function: generates an alignment using MUSCLE of the primer and sequence
  Returns : alignment
  Args    : none (globs the files)
+ 
 =cut
 
 ##################################
@@ -355,11 +381,13 @@ sub _align_muscle {
 ##################################
 
 =head2 _align_convert()
+
  Title   : _align_convert()
- Usage   : _align_convert();  
+ Usage   : _align_convert()  
  Function: converts alignment from aln to clustalw
  Returns : clustalw alignment
  Args    : none (globs the files)
+ 
 =cut
 
 ##################################
@@ -391,11 +419,13 @@ sub _align_convert {
 ##################################
 
 =head2 _graphics()
+
  Title   : _graphics()
- Usage   : _graphics();  
+ Usage   : _graphics()
  Function: converts each clustal alignment to a graphical output
  Returns : jpeg
  Args    : none (globs the files)
+ 
 =cut
 
 ##################################
@@ -447,11 +477,13 @@ sub _graphics {
 ##################################
 
 =head2 _graphics_all_primers()
+
  Title   : _graphics_all_primers()
- Usage   : _graphics_all_primers();  
+ Usage   : _graphics_all_primers()  
  Function: converts each feature file to a single graphical output
  Returns : png
  Args    : none (globs the files)
+ 
 =cut
 
 ##################################
@@ -565,11 +597,13 @@ sub uniq {
 ##################################
 
 =head2 _cleanup()
+
  Title   : _cleanup()
- Usage   : _cleanup();
+ Usage   : _cleanup()
  Function: option to delete tmp files
  Returns : nothing
  Args    : 1=yes, 0=no
+ 
 =cut
 
 ##################################
@@ -595,10 +629,11 @@ sub clean_up {
 ####################################
 
 =head1 LICENSE AND COPYRIGHT
- Copyright (C) 2017 Damien M. O'Halloran
- GNU GENERAL PUBLIC LICENSE
- Version 2, June 1991
  
+ Copyright (C) 2017 Damien M. O'Halloran
+ 
+ GNU GENERAL PUBLIC LICENSE Version 2, June 1991
+
 =cut
 
 1;
