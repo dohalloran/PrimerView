@@ -1,571 +1,342 @@
-package PRIMERVIEW;
+#
+# module for PrimerView
+#
+#       uses the software primer3
+#       https://sourceforge.net/projects/primer3/
+#       by Steve Rozen et al.
+#       and the MUSCLE alignment tool
+#       http://www.drive5.com/muscle/
+#       by Robert Edgar
+#       and the Bio::Graphics modules within Bioperl
+#       by Lincoln Stein
+#       and by Ewan Birney
+#
+# Copyright Damien O'Halloran
+#
+# You may distribute this module under the same terms as perl itself
+# History
+# initial release 2015, new release 2017
+# POD documentation - main docs before the code
 
-=pod
+=head1 NAME
+PrimerView - generates graphical outputs that map the position and distribution of primers to the target sequence
+=head1 SYNOPSIS
+use strict;
+use warnings;
+use PRIMERVIEW;
+
+my $in_file = "test_seqs.fasta";
+
+my $tmp = PRIMERVIEW->new();
  
-=head1 INPUT PARAMETERS
+ $tmp->load_selections(  
+    in_file        => $in_file, 
+    single_view    => "1",   
+    batch_view     => "1",      
+    clean_up        => "1"   
+ );   
  
-PrimerView version 2.0
-
-Author: Damien O'Halloran, The George Washington University, 2015
-
-To run simply execute as follows specifying the Getopt arguments: 
->perl primerview_driver.pl [-a filename e.g. test_seqs.fasta] 
-   [-b 5' search area, integer] [-c 3' search area, integer] 
-[-d primer max, integer] [-e primer min, integer] [-f GC clamp Y or N]
-[-g upper GC, integer] [-h lower GC, integer] [-i upper Tm, integer] 
-[-j lower Tm, integer] [-k specificty across entire input file, Y or N]
-
-example settings: ">perl primerview_driver.pl -a test_seqs.fasta"
-
-default settings are as follows:
-my $fasta           = $opts{a};
-my $five_prime_end  = $opts{b} || "150";
-my $three_prime_end = $opts{c} || "150";
-my $kmer_max        = $opts{d} || "28";
-my $kmer_min        = $opts{e} || "22";
-my $clamp           = $opts{f} || "Y";
-my $higher_gc       = $opts{g} || "60";
-my $lower_gc        = $opts{h} || "40";
-my $upper_tm        = $opts{i} || "68";
-my $lower_tm        = $opts{j} || "55";
-my $spec            = $opts{k} || "N";
-the defaults will be overwritten if a commandline parameter is added
-   
-where:  'primerview_driver.pl' is a simple driver for the PRIMERVIEW and SequenceIO packages, 
-and 'test_seqs.fasta' is a fasta file with sample query sequences.
-
-if only the distribution graphic of primers is required
-then cancel the following subs:
-$tmp->align_muscle();
-$tmp->align_convert();
-$tmp->graphics();
-
-you must have muscle.exe in your PATH and you must have following BioPerl modules: 
-##  Bio::SeqIO 
-##  Bio::Tools::Run::Alignment::Muscle 
-##  Bio::AlignIO
-##  Bio::Align::Graphics
-##  Bio::Graphics
-##  Bio::SeqFeature::Generic
-
-WARNING: the subroutine 'clean_up' deletes the '.fa', '.fa.fasta', 
-and '.fa.fasta.aln' extension files generated from cwd, 
- 
+  $tmp->run_primerview();  
+=head1 DESCRIPTION
+ designs forward and reverse primers from multi-sequence datasets, and generates graphical outputs that map the position and distribution of primers to the target sequence
+=head1 FEEDBACK
+damienoh@gwu.edu
+=head2 Mailing Lists
+User feedback is an integral part of the evolution of this module. Send your comments and suggestions preferably to one of the mailing lists.  Your participation is much appreciated.
+  
+=head2 Support 
+Please direct usage questions or support issues to:
+<damienoh@gwu.edu>
+Please include a thorough description of the problem with code and data examples if at all possible.
+=head2 Reporting Bugs
+Report bugs to the GitHub bug tracking system to help keep track of the bugs and their resolution.  Bug reports can be submitted via the GitHub page:
+ https://github.com/dohalloran/PrimerView/issues
+  
+=head1 AUTHORS - Damien OHalloran
+Email: damienoh@gwu.edu
+=head1 APPENDIX
+The rest of the documentation details each of the object
+methods.
 =cut
+
+# Let the code begin...
+
+package PRIMERVIEW;
 
 use strict;
 use warnings;
-use base 'Exporter';
+
 use Cwd;
-use Bio::Tools::Run::Alignment::Muscle;
+
+use Bio::SeqIO;
 use Bio::AlignIO;
+use Bio::Tools::Run::Alignment::Muscle;
 use Bio::Align::Graphics;
-use Bio::Graphics;
 use Bio::SeqFeature::Generic;
+use Bio::Graphics;
 
 #########################
 
-our $VERSION = '2.0';
+our $VERSION = '3.0';
 
 #########################
 
-our @EXPORT =
-  qw/ primerview align_muscle align_convert graphics graphics_all_primers clean_up /;
+=head2 new()
+ Title   : new()
+ Usage   : my $tmp = PRIMERVIEW->new();
+ Function: constructor routine
+ Returns : a blessed object
+ Args    : none 
+=cut
+
+##################################
+
+sub new {
+    my $class = shift;
+    my $self  = {};
+    bless $self, $class;
+
+    return $self;
+}
+
+##################################
+
+=head2 load_selections()
+ Title   : load_selections()
+ Usage   :  $tmp->load_selections(  
+                in_file        => $in_file, 
+                single_view    => "1",   
+                batch_view     => "1",      
+                clean_up        => "1"   
+            );  
+ Function: Populates the user data into $self hash
+ Returns : nothing returned
+ Args    : 
+ -in_file, the name of the file containing the sequences in fasta format
+ -single_view, return a single graphical file depicting the primer mapped to the sequence for every primer 1=Yes, 0=No 
+ -batch_view, return a single graphical file depicting all primers mapped to the sequence for each sequence 1=Yes, 0=No 
+ -cleanup, option to delete tmp file: 1=Yes, 0=No
+=cut
+
+##################################
+
+sub load_selections {
+    my ( $self, %arg ) = @_;
+
+    if ( defined $arg{in_file} ) {
+        $self->{in_file} = $arg{in_file};
+    }
+    if ( defined $arg{single_view} ) {
+        $self->{single_view} = $arg{single_view};
+    }
+    if ( defined $arg{batch_view} ) {
+        $self->{batch_view} = $arg{batch_view};
+    }
+    if ( defined $arg{clean_up} ) {
+        $self->{clean_up} = $arg{clean_up};
+    }
+}
+###############################3
 
 #define global variables
-my $fasta;
+my $len_seq;
+my $out_image;
+my $outputfile;
+my $id;
 my $id_uniq;
 my $len_uniq;
-my $id;
-my $specificty;
-my $five_prime_end;
-my $three_prime_end;
-my $kmer_max;
-my $kmer_min;
-my $clamp;
-my $higher_gc;
-my $lower_gc;
-my $upper_tm;
-my $lower_tm;
-my $spec;
+my @read_len;
 my @array_length;
 my @array_name;
-my $Tm2;
-my $Tm;
-my $kmer;
-my $out_image;
-my $kmer_diff;
-my $outputfile;    #good to add PATH to appropriate dir
-my $selfie_cuttof = 12;    #change to make less/more stringent
-my %nn_s          = (
-    "AA" => 240,
-    "AC" => 173,
-    "AG" => 208,
-    "AT" => 239,
-    "AN" => 215,
-    "CA" => 129,
-    "CC" => 266,
-    "CG" => 278,
-    "CT" => 208,
-    "CN" => 220,
-    "GA" => 135,
-    "GC" => 267,
-    "GG" => 266,
-    "GT" => 173,
-    "GN" => 210,
-    "TA" => 169,
-    "TC" => 135,
-    "TG" => 129,
-    "TT" => 240,
-    "TN" => 168,
-    "NA" => 168,
-    "NC" => 210,
-    "NG" => 220,
-    "NT" => 215,
-    "NN" => 203,
-    "aa" => 240,
-    "ac" => 173,
-    "ag" => 208,
-    "at" => 239,
-    "an" => 215,
-    "ca" => 129,
-    "cc" => 266,
-    "cg" => 278,
-    "ct" => 208,
-    "cn" => 220,
-    "ga" => 135,
-    "gc" => 267,
-    "gg" => 266,
-    "gt" => 173,
-    "gn" => 210,
-    "ta" => 169,
-    "tc" => 135,
-    "tg" => 129,
-    "tt" => 240,
-    "tn" => 168,
-    "na" => 168,
-    "nc" => 210,
-    "ng" => 220,
-    "nt" => 215,
-    "nn" => 203
-);
-my %nn_h = (
-    "AA" => 91,
-    "AC" => 65,
-    "AG" => 78,
-    "AT" => 86,
-    "AN" => 80,
-    "CA" => 58,
-    "CC" => 110,
-    "CG" => 119,
-    "CT" => 78,
-    "CN" => 91,
-    "GA" => 56,
-    "GC" => 111,
-    "GG" => 110,
-    "GT" => 65,
-    "GN" => 85,
-    "TA" => 60,
-    "TC" => 56,
-    "TG" => 58,
-    "TT" => 91,
-    "TN" => 66,
-    "NA" => 66,
-    "NC" => 85,
-    "NG" => 91,
-    "NT" => 80,
-    "NN" => 80,
-    "aa" => 91,
-    "ac" => 65,
-    "ag" => 78,
-    "at" => 86,
-    "an" => 80,
-    "ca" => 58,
-    "cc" => 110,
-    "cg" => 119,
-    "ct" => 78,
-    "cn" => 91,
-    "ga" => 56,
-    "gc" => 111,
-    "gg" => 110,
-    "gt" => 65,
-    "gn" => 85,
-    "ta" => 60,
-    "tc" => 56,
-    "tg" => 58,
-    "tt" => 91,
-    "tn" => 66,
-    "na" => 66,
-    "nc" => 85,
-    "ng" => 91,
-    "nt" => 80,
-    "nn" => 80
-);
 
-sub primerview {
+##################################
+
+=head2 run_primerview()
+ Title   : run_primerview()
+ Usage   : $tmp->run_primerview();  
+ Function: parses input and executes commands based on %arg
+ Returns : graphical files based on user selections
+ Args    : none provided
+=cut
+
+##################################
+
+sub run_primerview {
+    my ( $self, %arg ) = @_;
+
+    my $fasta = $self->{in_file};
+
+    #parse the input file into arrays of sequence and id
+    my ( $seq_file, $id_file ) = parser($fasta);
+    my $specificty = join( ",", @$seq_file );
+
+    #input each sequence into primerview()
+    foreach my $sequence (@$seq_file) {
+        my $len_seq  = length($sequence);
+        my $shift_id = shift(@$id_file);
+        $shift_id =~ tr/a-zA-Z0-9//cd;
+        my $id_uniq      = $len_seq . "'" . $shift_id;
+        my $len_uniq     = $shift_id . "'" . $len_seq;
+        my $new_sequence = "SEQUENCE_TEMPLATE=" . $sequence . "\n" . "=";
+        my $temp_seq     = "primer3_temp.txt";
+
+        open my $fh, ">", $temp_seq or die;
+        print $fh($new_sequence);
+
+        _primerview(
+            $fasta,    $temp_seq, $len_seq, $shift_id,
+            $sequence, $id_uniq,  $len_uniq
+        );
+
+        if ( $self->{single_view} eq "1" ) {
+            $self->_align_muscle(%arg);
+            $self->_align_convert(%arg);
+            $self->_graphics(%arg);
+        }
+        if ( $self->{batch_view} eq "1" ) {
+            $self->_graphics_all_primers(%arg);
+        }
+
+    }
+    $self->clean_up(%arg);
+}
+
+##################################
+
+=head2 parser()
+ Title   : parser()
+ Usage   : parser($input_file);  
+ Function: parses the contents of the fasta file into ids and sequences
+ Returns : send back a reference to the arrays containing seqs and ids
+ Args    : fasta file 
+=cut
+
+##################################
+
+sub parser {
+    my $fasta = shift;
+
+    my @sequence;
+    my @id;
+
+    #create an instance of a Seqio object
+    my $seqio = Bio::SeqIO->new(
+        -file   => $fasta,
+        -format => "fasta",
+    );
+
+    while ( my $seqobj = $seqio->next_seq() ) {
+        my $seqStream = $seqobj->seq();
+        my $idStream  = $seqobj->id();
+        push @sequence, $seqStream;
+        push @id,       $idStream;
+    }
+
+    #send back a reference to the arrays containing seqs and ids
+    return ( \@sequence, \@id );
+
+}
+
+##################################
+
+=head2 _primerview()
+ Title   : _primerview()
+ Usage   : _primerview(
+            $fasta,    $temp_seq, $len_seq, $shift_id,
+            $sequence, $id_uniq,  $len_uniq
+        ); 
+ Function: runs and parses the primer3 side of things
+ Returns : primer feature files
+ Args    : $fasta,    $temp_seq, $len_seq, $shift_id, $sequence, $id_uniq,  $len_uniq
+=cut
+
+##################################
+sub _primerview {
+
     #collect GetOpts, sequences, and IDs
-    $fasta = shift;
+    my $fasta    = shift;
     my $sequence = shift;
-    my $len_seq  = shift;
-    $id_uniq         = shift;
-    $len_uniq        = shift;
-    $id              = shift;
-    $specificty      = shift;
-    $five_prime_end  = shift;
-    $three_prime_end = shift;
-    $kmer_max        = shift;
-    $kmer_min        = shift;
-    $clamp           = shift;
-    $higher_gc       = shift;
-    $lower_gc        = shift;
-    $upper_tm        = shift;
-    $lower_tm        = shift;
-    $spec            = shift;
+    $len_seq = shift;
+    $id      = shift;
+    my $read = shift;
+    $id_uniq  = shift;
+    $len_uniq = shift;
 
-    $specificty =~ s/\s//g;
-    $specificty =~ s/\n//g;
+    push @read_len, length($read);
+
     $id =~ tr/a-zA-Z0-9//cd;
 
-    $kmer_diff  = $kmer_max - $kmer_min;
     $outputfile = $fasta . "_primers.txt";
 
     #declare output file
     $out_image = "GRAPHIC_$id.txt";
 
-    #skip to next if selected 5' or 3' length is longer than the sequence length
-    if ( $five_prime_end > length $sequence ) {
-        next;
-    }
-    if ( $three_prime_end > length $sequence ) {
-        next;
-    }
+    my $p3 = $id . "_p3_temp.txt";
 
-    #skip to next if sequence length is <100bps
-    if ( length $sequence < 100 ) {
-        next;
-    }
-########################################>>>>>>>>>>>>>>>>>>>>>>>>
-######## FORWARD PRIMER
-########################################>>>>>>>>>>>>>>>>>>>>>>>>
-########################################>>>>>>>>>>>>>>>>>>>>>>>>
-################################################################################>>>>>>>>>>>>>>>>>>>>>>>>
-########################################################################################################################>>>>>>>>>>>>>>>>>>>>>>>>
-################################################################################################################################################################>>>>>>>>>>>>>>>>>>>>>>>>
-    #start counting
-    my $start = 1;
-    for ( my $i = $start - 1 ; $i < $five_prime_end - 1 ; $i += 2 ) {
-        $kmer = int( rand($kmer_diff) ) + $kmer_min;
-        $_ = substr( $sequence, $i, $kmer );
+    my $command = "primer3_core -format_output < $sequence >> $p3";
+    system($command);
 
-        #get self complementarity score
-        my $revF = reverse($_);
-        $revF =~ tr/ATGCatgc/TACGtacg/;
-        my $selfie_score = selfie( $_, $revF );
+    open my $fh,     "<",  $p3        or die;
+    open my $fh_out, ">>", $out_image or die;
+    my $count = 0;
+    while ( my $row = <$fh> ) {
 
-        #Count Gs and Cs
-        my $countGC = tr/GCgc//;
-
-        #Calculate percent GC
-        my $percentGC = 100 * $countGC / $kmer;
-        my $percentGCrounded = sprintf( "%0.1f", $percentGC );
-
-        #calculate Tm
-        if ( $kmer <= 36 ) {
-            $Tm = calcTm( $_, 100, 50 );
-        }
-        else {
-            $Tm = calclongTm( $_, 100, 50, $percentGCrounded );
-        }
-        my $Tmrounded = sprintf( "%0.1f", $Tm );
-
-        my $primer_end = $i + $kmer;
-
-        my $number_matches = () = $specificty =~ /$_/gi;
-
-        #define dinucleotide repeats and repetitive sequence
-        #and print results if statements are matched
-        if (   open( FUSIONFILE, ">>$outputfile" )
-            && $Tmrounded ge $lower_tm
-            && $Tmrounded le $upper_tm
-            && $percentGC ge $lower_gc
-            && $percentGC le $higher_gc
-            && $selfie_score < $selfie_cuttof
-            && calcRepeat($_) == 1
-            && checkClamp_($_, $clamp) == 1 
-            && checkSpecific_($number_matches, $spec) == 1 )
+        #print $row;
+        if ( $row =~
+/LEFT PRIMER\s+(\d*)\s+(\d+)\s+\d*\.\d+\s+\d*\.\d+\s+\d*\.\d+\s+\d*\.\d+\s+\d*\.\d+\s(.*)\n/
+          )
         {
-            print
-"$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
-            push @array_length, $len_uniq;
-            push @array_name,   $id_uniq;
-            print FUSIONFILE
-"$id\t$i\t$Tmrounded degC\tF:$_\t$selfie_score\t$percentGCrounded%\n";
-            open( OLIGOS, ">>$out_image" ) or die;
-            print OLIGOS "$i\t$selfie_score\t$i\t$primer_end\n";
-            close(OLIGOS);
-
-            #declare output files
-            my $out = "$i.fa";
-            open( ALIGN, ">$out" ) or die;
-            print ALIGN ">$id\n$sequence\n>$i\n$_\n";
-            close(ALIGN);
-            close(FUSIONFILE);
-        }
-    }
-
-
-########################################
-######## REVERSE PRIMER
-################################################################################################################################################################<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-########################################################################################################################<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-################################################################################<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-########################################<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-########################################<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-
-
-    #start counting for reverse primer
-    for (
-        my $j = length($sequence) - $three_prime_end ;
-        $j < length($sequence) ;
-        $j += 2
-      )
-    {
-        $kmer = int( rand($kmer_diff) ) + $kmer_min;
-        $_ = substr( $sequence, $j, $kmer );
-
-        #rev comp
-        my $revR = reverse($_);
-        $revR =~ tr/ATGCatgc/TACGtacg/;
-
-        #get self complementarity score
-        my $selfie_scoreR = selfie( $_, $revR );
-
-        #Count Gs and Cs
-        my $count_GC = tr/GCgc//;
-
-        #Calculate percent GC
-        my $percent_GC = 100 * $count_GC / $kmer;
-        my $percentGC_rounded = sprintf( "%0.1f", $percent_GC );
-
-        #calculate Tm
-        if ( $kmer <= 36 ) {
-            $Tm2 = calcTm( $_, 100, 50 );
-        }
-        else {
-            $Tm2 = calclongTm( $_, 100, 50, $percentGC_rounded );
-        }
-        my $Tm_rounded = sprintf( "%0.1f", $Tm2 );
-        my $primer_start_R = $j + $kmer;
-
-        my $number_matches_R = () = $specificty =~ /$_/gi;
-
-        #define dinucleotide repeats and repetitive sequence
-        #and print results if statements are matched
-        if (   open( FUSIONFILE, ">>$outputfile" )
-            && $Tm_rounded ge $lower_tm
-            && $Tm_rounded le $upper_tm
-            && $percent_GC ge $lower_gc
-            && $percent_GC le $higher_gc
-            && $selfie_scoreR < $selfie_cuttof
-            && calcRepeat($revR) == 1
-            && checkClamp_($revR, $clamp) == 1 
-            && checkSpecific_($number_matches_R, $spec) == 1 )
-        {
-            open( OLIGOS, ">>$out_image" ) or die;
-            print OLIGOS "$j\t$selfie_scoreR\t$primer_start_R\t$j\n";
-            close(OLIGOS);
+            $count++;
             push @array_length, $len_uniq;
             push @array_name,   $id_uniq;
 
-            #declare output files
-            my $out_r = "$j.fa";
-            open( ALIGN_R, ">$out_r" ) or die;
-            print ALIGN_R ">$id\n$sequence\n>$j\n$_\n";
-            close(ALIGN_R);
-            print
-"$id\t$j\t$Tm_rounded degC\tR:$revR\t$selfie_scoreR\t$percentGC_rounded%\n";
-            print FUSIONFILE
-"$id\t$j\t$Tm_rounded degC\tR:$revR\t$selfie_scoreR\t$percentGC_rounded%\n";
-            close(FUSIONFILE);
+            my $temp_fa = $id . "_" . $count . "_temp.fa";
+            open my $fh2, ">>", $temp_fa or die;
+            print $fh2( ">"
+                  . $id . "\n"
+                  . $read . "\n" . ">"
+                  . $count . "\n"
+                  . $3
+                  . "\n" );
+            my $add = $1 + $2;
+            print $fh_out( $1 . "\t" . $2 . "\t" . $1 . "\t" . $add . "\n" );
+        }
+        elsif ( $row =~
+/RIGHT PRIMER\s+(\d*)\s+(\d+)\s+\d*\.\d+\s+\d*\.\d+\s+\d*\.\d+\s+\d*\.\d+\s+\d*\.\d+\s(.*)\n/
+          )
+        {
+            $count++;
+            push @array_length, $len_uniq;
+            push @array_name,   $id_uniq;
+
+            my $temp_fa = $id . "_" . $count . "_temp.fa";
+            open my $fh2, ">>", $temp_fa or die;
+            my $minus = $1 - $2;
+            print $fh2( ">"
+                  . $id . "\n"
+                  . $read . "\n" . ">"
+                  . $count . "\n"
+                  . $3
+                  . "\n" );
+            print $fh_out( $1 . "\t" . $2 . "\t" . $1 . "\t" . $minus . "\n" );
         }
     }
+
 }
 
+##################################
 
-########################################
-########################################
-########################################
-######## SUBROUTINES FOR PRIMER DESIGN##
-########################################
-########################################
-########################################
-
-####################################
-=head1 checkClamp_
- Title   :  checkClamp_
- Usage   :  -command => sub { primer_dimer($oligo, $clamp); }
- Function:  checks to see if gc clamp paramter is met
- Returns :  1 (true) or 0 (false)
+=head2 _align_muscle()
+ Title   : _align_muscle()
+ Usage   : _align_muscle();  
+ Function: generates an alignment using MUSCLE of the primer and sequence
+ Returns : alignment
+ Args    : none (globs the files)
 =cut
 
-sub checkClamp_ {
-    my $checkPrimer = shift;
-    my $clampChoice = shift;
+##################################
+sub _align_muscle {
 
-        if ($clampChoice eq "N"){
-            return 1;
-        }
-        elsif ($clampChoice eq "Y" && $checkPrimer =~ m/cg$/i or $checkPrimer =~ m/gc$/i or $checkPrimer =~ m/gg$/i or $checkPrimer =~ m/cc$/i){
-            return 1;
-        }
-        else {
-            return 0;
-        }  
-}
-####################################
-=head1 checkSpecific_
- Title   :  checkSpecific_
- Usage   :  -command => sub { primer_dimer($number_matches, $spec); }
- Function:  checks to see if sequence specificty paramter is met
- Returns :  1 (true) or 0 (false)
-=cut
-
-sub checkSpecific_ {
-    my $specificNumber = shift;
-    my $specificChoice = shift;
-
-        if ($specificChoice eq "N"){
-            return 1;
-        }
-        elsif ($specificChoice eq "Y" && $specificNumber == 1){
-            return 1;
-        }
-        else {
-            return 0;
-        }  
-}
-####################################
-sub calclongTm {
-    my $sequence  = shift;
-    my $DNA_nM    = shift;
-    my $K_mM      = shift;
-    my $percentGC = shift;
-    my $new_GC    = $percentGC / 100;
-    return 81.5 + ( 16.6 * ( log( $K_mM / 1000.0 ) / log(10) ) ) +
-      ( 41.0 * $new_GC ) - ( 600.0 / length($sequence) );
-}
-
-####################################
-sub calcTm {
-    my $sequence = uc(shift);
-    my $DNA_nM   = shift;
-    my $K_mM     = shift;
-    my $dH       = 0;
-    my $dS       = 108;
-    my $seq_len  = length($sequence);
-    my $i;
-
-    # Compute dH and dS
-    for ( $i = 0 ; $i < ( $seq_len - 1 ) ; $i++ ) {
-        my $pair = substr( $_, $i, 2 );
-        $dH += $nn_h{$pair};
-        $dS += $nn_s{$pair};
-    }
-
-    $dH *= -100.0;
-    $dS *= -0.1;
-
-    return $dH / ( $dS + 1.987 * log( $DNA_nM / 4000000000.0 ) ) - 273.15 +
-      16.6 * ( log( $K_mM / 1000.0 ) / log(10) );
-}
-
-####################################
-sub calcRepeat {
-    my $primer = shift;
-    if (   $primer !~ /AAAAA/i
-        && $primer !~ /TTTTT/i
-        && $primer !~ /GGGGG/i
-        && $primer !~ /CCCCC/i
-        && $primer !~ /ATATATAT/i
-        && $primer !~ /TATATATA/i
-        && $primer !~ /GCGCGCGC/i
-        && $primer !~ /CGCGCGCG/i )
-    {
-        return 1;
-    }
-    else {
-        return 0;
-    }
-}
-
-####################################
-sub selfie {
-    my $primer_f  = shift;
-    my $primer_rc = shift;               #revcomp primer
-    my $FLEN      = length $primer_rc;
-    my $RC_LEN    = length $primer_f;
-    my $D         = [];
-    for ( my $t = 0 ; $t <= $FLEN ; ++$t ) {
-        $D->[$t][0] = 0;
-    }
-    for ( my $p = 0 ; $p <= $RC_LEN ; ++$p ) {
-        $D->[0][$p] = $p;
-    }
-    for ( my $t = 1 ; $t <= $FLEN ; ++$t ) {
-        for ( my $p = 1 ; $p <= $RC_LEN ; ++$p ) {
-            $D->[$t][$p] =
-
-              min3(
-                substr( $primer_rc, $t - 1, 1 ) eq
-                  substr( $primer_f, $p - 1, 1 )
-                ? $D->[ $t - 1 ][ $p - 1 ]
-                : $D->[ $t - 1 ][ $p - 1 ] + 1,
-
-                $D->[ $t - 1 ][$p] + 1,
-
-                $D->[$t][ $p - 1 ] + 1
-              );
-        }
-    }
-
-    my @matches   = ();
-    my $bestscore = 10000000;
-
-    for ( my $t = 1 ; $t <= $FLEN ; ++$t ) {
-        if ( $D->[$t][$RC_LEN] < $bestscore ) {
-            $bestscore = $D->[$t][$RC_LEN];
-            @matches   = ($t);
-        }
-        elsif ( $D->[$t][$RC_LEN] == $bestscore ) {
-            push( @matches, $t );
-        }
-    }
-
-    return $bestscore;
-}
-
-####################################
-sub min3 {
-    my ( $i, $j, $k ) = @_;
-    my ($tmp);
-
-    $tmp = ( $i < $j ? $i : $j );
-    $tmp < $k ? $tmp : $k;
-}
-
-
-###############################################
-###############################################
-###############################################
-###############################################
-######## SUBROUTINES TO MANIPULATE ALIGNMENTS##
-###############################################
-###############################################
-###############################################
-###############################################
-
-sub align_muscle {
     my $dir = cwd();
 
     foreach my $fp ( glob("$dir/*.fa") ) {
@@ -581,8 +352,20 @@ sub align_muscle {
 
 }
 
-####################################
-sub align_convert {
+##################################
+
+=head2 _align_convert()
+ Title   : _align_convert()
+ Usage   : _align_convert();  
+ Function: converts alignment from aln to clustalw
+ Returns : clustalw alignment
+ Args    : none (globs the files)
+=cut
+
+##################################
+
+sub _align_convert {
+
     my $dir = cwd();
 
     foreach my $fp ( glob("$dir/*.fasta") ) {
@@ -602,18 +385,23 @@ sub align_convert {
         }
 
     }
+
 }
 
-###############################################
-###############################################
-###############################################
-###############################################
-######## SUBROUTINES FOR GRAPHICAL FILES#######
-###############################################
-###############################################
-###############################################
+##################################
 
-sub graphics {
+=head2 _graphics()
+ Title   : _graphics()
+ Usage   : _graphics();  
+ Function: converts each clustal alignment to a graphical output
+ Returns : jpeg
+ Args    : none (globs the files)
+=cut
+
+##################################
+
+sub _graphics {
+
     my $dir = cwd();
 
     foreach my $fp ( glob("$dir/*.fa.fasta.aln") ) {
@@ -656,8 +444,19 @@ sub graphics {
 
 }
 
-####################################
-sub graphics_all_primers {
+##################################
+
+=head2 _graphics_all_primers()
+ Title   : _graphics_all_primers()
+ Usage   : _graphics_all_primers();  
+ Function: converts each feature file to a single graphical output
+ Returns : png
+ Args    : none (globs the files)
+=cut
+
+##################################
+sub _graphics_all_primers {
+
     my $dir = cwd();
     my $orientation;
     my @gene_length;
@@ -763,24 +562,44 @@ sub uniq {
     return grep { !$seen{$_}++ } @_;
 }
 
+##################################
 
-###############################################
-###############################################
-###############################################
-###############################################
-######## SUBROUTINES TO CLEAN UP CWD###########
-###############################################
-###############################################
-###############################################
+=head2 _cleanup()
+ Title   : _cleanup()
+ Usage   : _cleanup();
+ Function: option to delete tmp files
+ Returns : nothing
+ Args    : 1=yes, 0=no
+=cut
+
+##################################
 
 sub clean_up {
-    my $dir = cwd();
-    unlink glob "$dir/*.fa";
-    unlink glob "$dir/*.fa.fasta";
-    unlink glob "$dir/*.fa.fasta.aln";
+    my ( $self, %arg ) = @_;
+    if ( $self->{clean_up} eq "1" ) {
+        my $dir = cwd();
+        unlink glob "$dir/*_temp.txt";
+        unlink glob "$dir/*_temp.TXT";
+        unlink glob "$dir/*.fa";
+        unlink glob "$dir/GRAPHIC_*.txt";
+        unlink glob "$dir/GRAPHIC_*.TXT";
+        unlink glob "$dir/*.aln";
+        unlink glob "$dir/*.fa.fasta";
+        unlink glob "$dir/*.fa.fasta.aln";
+    }
+    else {
+        print "...all done...";
+    }
 }
 
 ####################################
-####################################
+
+=head1 LICENSE AND COPYRIGHT
+ Copyright (C) 2017 Damien M. O'Halloran
+ GNU GENERAL PUBLIC LICENSE
+ Version 2, June 1991
+ 
+=cut
+
 1;
 
