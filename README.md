@@ -1,7 +1,6 @@
 ## PRIMERVIEW version 3.0
 Author: Damien O'Halloran, The George Washington University
 
-[![DOI](https://zenodo.org/badge/23283/dohalloran/PrimerView.svg)](https://zenodo.org/badge/latestdoi/23283/dohalloran/PrimerView) 
 [![GitHub issues](https://img.shields.io/github/issues/dohalloran/PRIMERVIEW.svg)](https://github.com/dohalloran/PRIMERVIEW/issues)
 
 ## Installation
