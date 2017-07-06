@@ -19,7 +19,11 @@ WriteMakefile(
     },
     PREREQ_PM => {
         'Bio::Graphics' => 0,
-        'Bio::SeqFeature::Generic' => 0,
+        'Bio::SeqFeature::Generic' => 0, 
+        'Bio::Tools::Run::Alignment::Muscle' => 0,  
+        'Bio::AlignIO' => 0,  
+        'Bio::Align::Graphics' => 0,
+        'Bio::SeqIO' => 0,  
     },
     dist  => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean => { FILES => 'PRIMERVIEW-*' },
