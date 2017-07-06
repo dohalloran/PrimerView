@@ -13,7 +13,11 @@
             "requires": {
                 "perl": "5.006",
                 "Bio::Graphics": "0",
-                "Bio::SeqFeature::Generic": "0"
+                "Bio::SeqFeature::Generic": "0", 
+                "Bio::Tools::Run::Alignment::Muscle": "0",  
+                "Bio::AlignIO": "0",  
+                "Bio::Align::Graphics": "0",
+                "Bio::SeqIO": "0"
             }
         },
         "build": {
